@@ -32,10 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
 
+# claude code local settings
+.claude/settings.local.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
+
+# local sqlite db (regenerate: npm run db:migrate && npm run db:seed)
+/dev.db*

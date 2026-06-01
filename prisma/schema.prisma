@@ -1,0 +1,126 @@
+// jdl — 파편화된 개인 기록을 한 곳에 모으는 서비스
+// 핵심 원칙: 모든 것은 "기록(Entry)". 독서·생각·목표로그가 전부 Entry 한 종류이고,
+// 검색·시각화·목표는 그 기록 데이터를 다른 각도로 비추는 레이어다.
+//
+// 참고: SQLite는 Prisma enum을 지원하지 않으므로 type/source/status는 String으로 두고
+// 허용값은 lib/domain.ts 의 상수 + Zod 스키마로 강제한다.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// 사용자. 지금은 단일 사용자(seed로 1명)지만 멀티유저 확장을 위해 모든 데이터에 userId를 둔다.
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  entries Entry[]
+  books   Book[]
+  tags    Tag[]
+  goals   Goal[]
+}
+
+/// 책. 독서 기록(Entry.type = BOOK)이 연결되는 대상.
+model Book {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  author     String?
+  isbn       String?
+  coverUrl   String?
+  totalPages Int?
+  createdAt  DateTime @default(now())
+
+  entries Entry[]
+
+  @@index([userId])
+}
+
+/// 기록. 서비스의 중심 단위.
+/// type: BOOK(독후감) | THOUGHT(생각/메모) | NOTE(일반 노트) | GOAL_LOG(목표 진행 기록)
+/// source: 어디서 왔는지 — MANUAL | PAPER | NOTE_APP | EXTERNAL (파편화 통합의 핵심)
+model Entry {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String
+  title     String?
+  content   String  @default("")
+  source    String  @default("MANUAL")
+  sourceRef String? // 원본 위치(URL/메모앱 링크 등) — 가져온 기록의 출처 추적용
+  mood      Int? // -2..2, 시각화용 감정/생각 톤
+
+  occurredAt DateTime @default(now()) // 실제로 있었던 시점(사용자 편집 가능)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bookId String?
+  book   Book?   @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  goalId String?
+  goal   Goal?   @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  tags TagsOnEntries[]
+
+  @@index([userId, occurredAt])
+  @@index([userId, type])
+  @@index([bookId])
+  @@index([goalId])
+}
+
+/// 정리·검색·시각화를 위한 태그.
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String? // 시각화용 hex
+  createdAt DateTime @default(now())
+
+  entries TagsOnEntries[]
+
+  @@unique([userId, name])
+}
+
+/// 기록 ↔ 태그 다대다 조인.
+model TagsOnEntries {
+  entryId    String
+  entry      Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@id([entryId, tagId])
+  @@index([tagId])
+}
+
+/// 목표. 설정 → 기록(Entry.goalId)으로 연결 → 진행도/상태 추적.
+/// status: ACTIVE | ACHIEVED | PAUSED | ABANDONED
+model Goal {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  status       String    @default("ACTIVE")
+  targetValue  Int? // 예: 12 (권)
+  currentValue Int       @default(0)
+  unit         String? // 예: "권", "회"
+  startDate    DateTime  @default(now())
+  targetDate   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  entries Entry[]
+
+  @@index([userId, status])
+}
