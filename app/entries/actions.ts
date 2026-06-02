@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { entryInputSchema } from "@/lib/domain";
 import { prisma } from "@/lib/db";
 import { getCurrentUserId } from "@/lib/user";
@@ -72,6 +72,13 @@ export async function updateEntry(id: string, formData: FormData) {
   const data = parseEntryForm(formData);
   const tagIds = await resolveTagIds(userId, data.tags);
 
+  // 소유권 확인 — 남의 기록은 수정 불가(IDOR 방지)
+  const owned = await prisma.entry.findFirst({
+    where: { id, userId },
+    select: { id: true },
+  });
+  if (!owned) notFound();
+
   // 태그 연결을 초기화하고 다시 연결
   await prisma.tagsOnEntries.deleteMany({ where: { entryId: id } });
   await prisma.entry.update({
@@ -97,7 +104,9 @@ export async function updateEntry(id: string, formData: FormData) {
 }
 
 export async function deleteEntry(id: string) {
-  await prisma.entry.delete({ where: { id } });
+  const userId = await getCurrentUserId();
+  // userId 스코프 → 남의 기록은 삭제되지 않는다(IDOR 방지)
+  await prisma.entry.deleteMany({ where: { id, userId } });
   revalidatePath("/entries");
   revalidatePath("/");
   redirect("/entries");

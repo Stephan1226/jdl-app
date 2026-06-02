@@ -1,24 +1,71 @@
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { createClient } from "@supabase/supabase-js";
 import { PrismaClient } from "../app/generated/prisma/client";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
+// 데모 로그인 계정 (시연용). 시드는 이 유저를 Supabase Auth에 만들고(이메일 확인됨),
+// 같은 UUID로 Prisma 데이터를 주입한다 → 바로 로그인해서 데모 데이터를 볼 수 있다.
+const DEMO_EMAIL = "me@jdl.app";
+const DEMO_PASSWORD = "jdl-demo-1234";
+
+const adapter = new PrismaPg({
+  connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
 });
 const prisma = new PrismaClient({ adapter });
+
+/** Supabase Auth에 확인된 데모 유저를 보장하고 그 id(UUID)를 반환한다. */
+async function ensureDemoAuthUser(): Promise<string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "시드에는 NEXT_PUBLIC_SUPABASE_URL 과 SUPABASE_SERVICE_ROLE_KEY 가 .env에 필요합니다.",
+    );
+  }
+
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data: created } = await admin.auth.admin.createUser({
+    email: DEMO_EMAIL,
+    password: DEMO_PASSWORD,
+    email_confirm: true,
+    user_metadata: { name: "나" },
+  });
+  if (created?.user) return created.user.id;
+
+  // 이미 존재하면 비밀번호·확인 상태를 데모 기본값으로 보정 후 재사용(재실행 시 항상 로그인 가능).
+  const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  const existing = list?.users.find((u) => u.email === DEMO_EMAIL);
+  if (existing) {
+    await admin.auth.admin.updateUserById(existing.id, {
+      password: DEMO_PASSWORD,
+      email_confirm: true,
+    });
+    return existing.id;
+  }
+
+  throw new Error("데모 Auth 유저를 생성하거나 찾지 못했습니다.");
+}
 
 async function main() {
   console.log("🌱 시드 시작...");
 
-  // 재실행 가능하도록 초기화
-  await prisma.tagsOnEntries.deleteMany();
-  await prisma.entry.deleteMany();
-  await prisma.tag.deleteMany();
-  await prisma.book.deleteMany();
-  await prisma.goal.deleteMany();
-  await prisma.user.deleteMany();
+  const userId = await ensureDemoAuthUser();
 
-  const user = await prisma.user.create({
-    data: { email: "me@jdl.app", name: "나" },
+  // 데모 유저의 기존 데이터만 정리(다른 유저 데이터는 건드리지 않는다).
+  await prisma.tagsOnEntries.deleteMany({ where: { entry: { userId } } });
+  await prisma.entry.deleteMany({ where: { userId } });
+  await prisma.tag.deleteMany({ where: { userId } });
+  await prisma.book.deleteMany({ where: { userId } });
+  await prisma.goal.deleteMany({ where: { userId } });
+
+  // Supabase auth.users ↔ Prisma User 브리지(같은 id).
+  const user = await prisma.user.upsert({
+    where: { id: userId },
+    update: { email: DEMO_EMAIL, name: "나" },
+    create: { id: userId, email: DEMO_EMAIL, name: "나" },
   });
 
   // 태그
@@ -136,6 +183,7 @@ async function main() {
     goals: await prisma.goal.count(),
   };
   console.log("✅ 시드 완료:", counts);
+  console.log(`🔑 데모 로그인: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
 }
 
 main()

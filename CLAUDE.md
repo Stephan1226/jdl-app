@@ -8,9 +8,9 @@
 
 코드 작성 시 주의:
 
-- **SQLite는 Prisma enum 미지원.** `type`/`source`/`status`는 `String` 컬럼이고, 허용값·라벨·검증은 전부 `lib/domain.ts`(상수 + Zod)에서 관리한다. 새 값/종류는 여기부터 추가.
-- **Prisma 7 = 드라이버 어댑터 방식.** 런타임 클라이언트는 `lib/db.ts`(better-sqlite3 어댑터). 생성물은 `app/generated/prisma`(import: `@/app/generated/prisma/client`).
-- 스키마 변경 후 `npm run db:migrate`. 시드는 `prisma/seed.mts`(ESM 필수) — `npm run db:seed`.
-- **단일 사용자.** 모든 쿼리는 `getCurrentUserId()`(`lib/user.ts`)로 스코프. 멀티유저 확장 시 이 헬퍼만 교체.
-- 데이터 변경(서버 액션)은 `revalidatePath` 후 `redirect`. DB 읽는 페이지는 `force-dynamic`.
-- Server Action은 각 도메인 폴더의 `actions.ts`(`"use server"`)에 둔다.
+- **`type`/`source`/`status`는 `String` 컬럼.** (Postgres enum 대신) 허용값·라벨·검증은 전부 `lib/domain.ts`(상수 + Zod)에서 관리한다. 새 값/종류는 여기부터 추가.
+- **DB = Supabase Postgres, Prisma 7 드라이버 어댑터.** 런타임 클라이언트는 `lib/db.ts`(`@prisma/adapter-pg`, `DATABASE_URL`=풀드 6543). 마이그레이션/CLI는 `prisma.config.ts`의 `DIRECT_URL`(다이렉트 5432). 생성물은 `app/generated/prisma`(import: `@/app/generated/prisma/client`).
+- 스키마 변경 후 `npm run db:migrate`(`DIRECT_URL` 필요). 시드는 `prisma/seed.mts`(ESM 필수) — `npm run db:seed`. ⚠️ `.env`의 DB URL 비밀번호에 `$`가 있으면 `%24`로 인코딩(Next의 `@next/env`가 `$`를 변수로 확장해 망가뜨림).
+- **인증 = Supabase Auth(멀티유저).** `lib/user.ts`의 `getCurrentUser()`가 Supabase 세션 유저를 **같은 id로 Prisma `User`에 upsert**(브리지). 페이지/액션은 `getCurrentUserId()`만 호출 — 이게 멀티유저 진입점. Supabase 서버 클라이언트는 `lib/supabase/server.ts`, 세션 갱신·라우트 보호는 루트 `proxy.ts`(※ Next 16에서 `middleware`→`proxy` 개명, Node 런타임). 인증 액션은 `app/auth/actions.ts`.
+- **인가는 앱 코드의 `userId` 스코프.** 읽기는 `findFirst({ where: { id, userId } })`, 수정/삭제도 `userId`를 포함해 남의 데이터 접근 차단(IDOR 방지). 새 쿼리/뮤테이션도 반드시 `userId` 스코프.
+- 데이터 변경(서버 액션)은 `revalidatePath` 후 `redirect`. DB 읽는 페이지는 `force-dynamic`. Server Action은 각 도메인 폴더의 `actions.ts`(`"use server"`)에 둔다.
