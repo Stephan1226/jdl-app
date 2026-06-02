@@ -1,11 +1,10 @@
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/app/generated/prisma/client";
 
-const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db";
-
 function createPrismaClient() {
-  // Prisma 7은 드라이버 어댑터 방식. 로컬 SQLite 파일에 better-sqlite3로 연결한다.
-  const adapter = new PrismaBetterSqlite3({ url: databaseUrl });
+  // Prisma 7은 드라이버 어댑터 방식. Supabase Postgres에 풀드(Supavisor/pgbouncer) 연결로 붙는다.
+  // DATABASE_URL = 풀드(6543, ?pgbouncer=true). 마이그레이션용 DIRECT_URL은 prisma.config.ts에서 쓴다.
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   return new PrismaClient({ adapter });
 }
 

@@ -2,8 +2,8 @@
 // 핵심 원칙: 모든 것은 "기록(Entry)". 독서·생각·목표로그가 전부 Entry 한 종류이고,
 // 검색·시각화·목표는 그 기록 데이터를 다른 각도로 비추는 레이어다.
 //
-// 참고: SQLite는 Prisma enum을 지원하지 않으므로 type/source/status는 String으로 두고
-// 허용값은 lib/domain.ts 의 상수 + Zod 스키마로 강제한다.
+// 참고: type/source/status는 (Postgres enum 대신) String 컬럼으로 두고, 허용값·라벨·검증을
+// lib/domain.ts의 상수 + Zod로 단일 관리한다 — 새 종류를 코드에서 바로 추가하기 위한 의도된 선택.
 
 generator client {
   provider = "prisma-client"
@@ -11,7 +11,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 /// 사용자. 지금은 단일 사용자(seed로 1명)지만 멀티유저 확장을 위해 모든 데이터에 userId를 둔다.

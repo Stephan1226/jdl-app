@@ -26,8 +26,9 @@ export async function createBook(formData: FormData) {
 }
 
 export async function deleteBook(id: string) {
-  // 연결된 기록은 onDelete: SetNull 로 보존된다.
-  await prisma.book.delete({ where: { id } });
+  const userId = await getCurrentUserId();
+  // 연결된 기록은 onDelete: SetNull 로 보존된다. userId 스코프로 IDOR 방지.
+  await prisma.book.deleteMany({ where: { id, userId } });
   revalidatePath("/books");
   revalidatePath("/entries");
   redirect("/books");

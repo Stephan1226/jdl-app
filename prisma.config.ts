@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // 마이그레이션·CLI는 다이렉트 연결(5432)을 써야 한다. 런타임 풀드 연결은 lib/db.ts.
+    url: process.env["DIRECT_URL"],
   },
 });

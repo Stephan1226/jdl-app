@@ -4,6 +4,7 @@ import {
   BookOpen,
   LayoutDashboard,
   LineChart,
+  LogOut,
   NotebookPen,
   Plus,
   Search,
@@ -12,7 +13,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { primaryButton } from "@/components/ui";
+import { logout } from "@/app/auth/actions";
+import { ghostButton, primaryButton } from "@/components/ui";
 
 type NavItem = {
   href: string;
@@ -30,8 +32,24 @@ const NAV: NavItem[] = [
   { href: "/goals", label: "목표", icon: Target },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  userEmail,
+}: {
+  children: React.ReactNode;
+  userEmail: string | null;
+}) {
   const pathname = usePathname();
+
+  // 로그인·회원가입은 사이드바 없이 가운데 정렬한 베어 레이아웃.
+  if (pathname === "/login" || pathname === "/signup") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4 py-10">
+        {children}
+      </div>
+    );
+  }
+
   const active = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
@@ -69,7 +87,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <p className="mt-auto px-2 text-xs text-muted">졸업작품 · jdl</p>
+        <div className="mt-auto space-y-2.5 px-2">
+          {userEmail && (
+            <p className="truncate text-xs text-muted" title={userEmail}>
+              {userEmail}
+            </p>
+          )}
+          <form action={logout}>
+            <button type="submit" className={`${ghostButton} w-full`}>
+              <LogOut className="h-4 w-4" /> 로그아웃
+            </button>
+          </form>
+          <p className="text-xs text-muted">졸업작품 · jdl</p>
+        </div>
       </aside>
 
       <div className="flex w-full min-w-0 flex-col">
@@ -78,9 +108,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/" className="text-lg font-bold">
             jdl<span className="text-accent">.</span>
           </Link>
-          <Link href="/entries/new" className={primaryButton}>
-            <Plus className="h-4 w-4" />새 기록
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/entries/new" className={primaryButton}>
+              <Plus className="h-4 w-4" />새 기록
+            </Link>
+            <form action={logout}>
+              <button
+                type="submit"
+                aria-label="로그아웃"
+                className={`${ghostButton} px-2.5`}
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-border px-2 py-2 md:hidden">
           {NAV.map((item) => {
