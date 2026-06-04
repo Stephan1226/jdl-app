@@ -3,7 +3,7 @@ import { getBooksData } from "@/lib/data/books";
 import { getQueryClient } from "@/lib/query/client";
 import { qk } from "@/lib/query/keys";
 import { getCurrentUserId } from "@/lib/user";
-import { BooksView } from "./books-view";
+import { BooksView } from "../books-view";
 
 export const dynamic = "force-dynamic";
 
