@@ -4,7 +4,7 @@ import { isEntryType } from "@/lib/domain";
 import { getQueryClient } from "@/lib/query/client";
 import { qk } from "@/lib/query/keys";
 import { getCurrentUserId } from "@/lib/user";
-import { EntriesView } from "./entries-view";
+import { EntriesView } from "../entries-view";
 
 export default async function EntriesPage({
   searchParams,

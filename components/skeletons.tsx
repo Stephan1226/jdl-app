@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui";
 
 /**
@@ -68,6 +69,19 @@ export function CardGridSkeleton({ count = 4 }: { count?: number }) {
           <Skeleton className="h-2 w-full rounded-full" />
         </Card>
       ))}
+    </div>
+  );
+}
+
+/**
+ * 프리페치되지 않는 하위 페이지(폼·상세)용 전환 로더.
+ * 콘텐츠 스켈레톤(목록/그리드)이 안 맞는 곳에서, 스피너 + 라벨로 자연스러운 전환을 보여준다.
+ */
+export function PageLoader({ label }: { label?: string }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+      <Loader2 className="h-7 w-7 animate-spin text-accent" />
+      {label && <p className="text-sm text-muted">{label}</p>}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { getGoalsData } from "@/lib/data/goals";
 import { getQueryClient } from "@/lib/query/client";
 import { qk } from "@/lib/query/keys";
 import { getCurrentUserId } from "@/lib/user";
-import { GoalsView } from "./goals-view";
+import { GoalsView } from "../goals-view";
 
 export const dynamic = "force-dynamic";
 
