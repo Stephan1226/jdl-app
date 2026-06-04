@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
+import { Providers } from "@/app/providers";
 import { getOptionalUser } from "@/lib/user";
 
 const geistSans = Geist({
@@ -22,7 +23,9 @@ export default async function RootLayout({
   return (
     <html lang="ko" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <AppShell userEmail={user?.email ?? null}>{children}</AppShell>
+        <Providers>
+          <AppShell userEmail={user?.email ?? null}>{children}</AppShell>
+        </Providers>
       </body>
     </html>
   );

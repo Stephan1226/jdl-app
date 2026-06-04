@@ -74,6 +74,7 @@ export function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                   on
                     ? "bg-accent/10 text-accent"
@@ -130,6 +131,7 @@ export function AppShell({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium ${
                   on ? "bg-accent/10 text-accent" : "text-muted"
                 }`}
