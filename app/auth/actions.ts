@@ -4,6 +4,7 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ensureUserRecord } from "@/lib/user";
 
 export type AuthState = { error?: string; message?: string } | undefined;
 
@@ -31,10 +32,13 @@ export async function login(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     return { error: "이메일 또는 비밀번호가 올바르지 않습니다" };
   }
+
+  // 브리지: 로그인 시점에 Prisma User를 보장(페이지 로드마다가 아니라 여기서 1회).
+  await ensureUserRecord(data.user);
 
   revalidatePath("/", "layout");
   redirect("/");
@@ -71,7 +75,10 @@ export async function signup(
     };
   }
 
-  // 이메일 인증이 꺼져 있으면 즉시 로그인 상태가 된다.
+  // 이메일 인증이 꺼져 있으면 즉시 로그인 상태가 된다 → 이 시점에 브리지.
+  if (data.user) {
+    await ensureUserRecord(data.user);
+  }
   revalidatePath("/", "layout");
   redirect("/");
 }
