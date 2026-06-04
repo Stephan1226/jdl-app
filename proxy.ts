@@ -37,10 +37,11 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  // 토큰 갱신 — 절대 제거 금지. getUser() 호출이 만료 세션을 재발급한다.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // 세션 검증 + 토큰 갱신 — 절대 제거 금지.
+  // getClaims()는 (비대칭 JWT 서명키 사용 시) JWT를 네트워크 없이 로컬 검증하고,
+  // 내부 getSession()이 만료 세션을 재발급한다(대칭/HS256이면 getUser()로 폴백 = 네트워크 1회).
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const path = request.nextUrl.pathname;
 
