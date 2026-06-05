@@ -4,7 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Search as SearchIcon } from "lucide-react";
 import Link from "next/link";
 import { EntryCard } from "@/components/entry-card";
-import { EmptyState, PageHeader, inputClass, primaryButton } from "@/components/ui";
+import {
+  EmptyState,
+  PageHeader,
+  inputClass,
+  primaryButton,
+  selectClass,
+} from "@/components/ui";
 import {
   ENTRY_SOURCE_LABELS,
   ENTRY_SOURCES,
@@ -57,7 +63,7 @@ export function SearchView({ params }: { params: Record<string, string> }) {
           </button>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          <select name="type" defaultValue={type} className={inputClass}>
+          <select name="type" defaultValue={type} className={selectClass}>
             <option value="">모든 종류</option>
             {ENTRY_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -65,7 +71,7 @@ export function SearchView({ params }: { params: Record<string, string> }) {
               </option>
             ))}
           </select>
-          <select name="source" defaultValue={source} className={inputClass}>
+          <select name="source" defaultValue={source} className={selectClass}>
             <option value="">모든 출처</option>
             {ENTRY_SOURCES.map((s) => (
               <option key={s} value={s}>
@@ -73,7 +79,7 @@ export function SearchView({ params }: { params: Record<string, string> }) {
               </option>
             ))}
           </select>
-          <select name="tag" defaultValue={tag} className={inputClass}>
+          <select name="tag" defaultValue={tag} className={selectClass}>
             <option value="">모든 태그</option>
             {allTags.map((t) => (
               <option key={t.name} value={t.name}>

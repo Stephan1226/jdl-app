@@ -24,6 +24,7 @@ import {
   inputClass,
   labelClass,
   primaryButton,
+  selectClass,
 } from "@/components/ui";
 import type { BookListResult } from "@/lib/data/books";
 import { fetchJson } from "@/lib/query/fetcher";
@@ -246,7 +247,7 @@ export function BooksView() {
             id="sort-key"
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className={inputClass}
+            className={selectClass}
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
