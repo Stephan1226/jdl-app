@@ -97,4 +97,9 @@ export const dangerButton =
 /** 폼 입력 공통 스타일 */
 export const inputClass =
   "w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20";
+
+/** <select> 전용 스타일 — 네이티브 화살표 대신 커스텀 chevron, 우측 여유 */
+export const selectClass =
+  `${inputClass} appearance-none pr-10 bg-no-repeat [background-position:right_12px_center] [background-size:16px] [background-image:url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23999%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E)]`;
+
 export const labelClass = "block text-sm font-medium mb-1.5";
