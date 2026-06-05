@@ -13,4 +13,5 @@ export const qk = {
   insights: ["insights"] as const,
   search: (params: Record<string, string>) => ["search", params] as const,
   entryFormOptions: ["entry-form-options"] as const,
+  bookSearch: (query: string) => ["book-search", query] as const,
 };

@@ -1,12 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { BookOpen } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BookOpen, Search } from "lucide-react";
 import Link from "next/link";
+import superjson from "superjson";
 import {
   Card,
   EmptyState,
   PageHeader,
+  ghostButton,
   inputClass,
   labelClass,
   primaryButton,
@@ -16,11 +19,68 @@ import { fetchJson } from "@/lib/query/fetcher";
 import { qk } from "@/lib/query/keys";
 import { createBook } from "./actions";
 
+interface SearchBookDoc {
+  title: string;
+  authors: string[];
+  publisher: string;
+  thumbnail: string;
+  price: number;
+  sale_price: number;
+  isbn: string;
+  url: string;
+  datetime: string;
+  status: string;
+}
+
+interface SearchBookResponse {
+  meta: { total_count: number; pageable_count: number; is_end: boolean };
+  documents: SearchBookDoc[];
+}
+
 export function BooksView() {
   const { data: books = [] } = useQuery({
     queryKey: qk.books,
     queryFn: () => fetchJson<BooksData>("/api/books"),
   });
+
+  const queryClient = useQueryClient();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchBookDoc[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [addedIsbns, setAddedIsbns] = useState<Set<string>>(new Set());
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/search/books?${new URLSearchParams({ query })}`);
+      if (!res.ok) throw new Error(`검색 실패 (${res.status})`);
+      const data = superjson.parse<SearchBookResponse>(await res.text());
+      setResults(data.documents);
+    } catch {
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  async function handleAddBook(doc: SearchBookDoc) {
+    const isbn = doc.isbn.split(" ")[0] || doc.isbn;
+    const formData = new FormData();
+    formData.set("title", doc.title);
+    formData.set("author", doc.authors.join(", "));
+    await createBook(formData);
+    setAddedIsbns((prev) => new Set(prev).add(isbn));
+    queryClient.invalidateQueries({ queryKey: qk.books });
+    setTimeout(() => {
+      setAddedIsbns((prev) => {
+        const next = new Set(prev);
+        next.delete(isbn);
+        return next;
+      });
+    }, 2000);
+  }
 
   return (
     <div className="space-y-6">
@@ -30,7 +90,91 @@ export function BooksView() {
       />
 
       <Card>
-        <h2 className="mb-3 font-medium">책 추가</h2>
+        <div className="mb-4">
+          <h2 className="mb-3 font-medium">Daum 책 검색</h2>
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className={`${inputClass} min-w-0 flex-1`}
+              placeholder="책 제목, 저자로 검색…"
+            />
+            <button
+              type="submit"
+              disabled={isSearching || !query.trim()}
+              className={primaryButton}
+            >
+              <Search className="h-4 w-4" />
+              {isSearching ? "검색 중…" : "검색"}
+            </button>
+          </form>
+        </div>
+
+        {results !== null && results.length === 0 && (
+          <p className="text-sm text-muted">검색 결과가 없습니다.</p>
+        )}
+
+        {results && results.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted">
+              총 {results.length}건
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {results.map((doc) => {
+                const isbn = doc.isbn.split(" ")[0] || doc.isbn;
+                const added = addedIsbns.has(isbn);
+                return (
+                  <Card
+                    key={isbn}
+                    className="flex gap-4"
+                  >
+                    <div className="h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-accent/10">
+                      {doc.thumbnail ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- 외부 CDN 이미지라 next/Image 사용 불가
+                        <img
+                          src={doc.thumbnail}
+                          alt={doc.title}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-accent">
+                          <BookOpen className="h-5 w-5" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col justify-between">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                          {doc.title}
+                        </p>
+                        <p className="truncate text-xs text-muted">
+                          {doc.authors.join(", ")}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {doc.publisher}
+                          {doc.sale_price > 0 && ` · ${doc.sale_price.toLocaleString()}원`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddBook(doc)}
+                        disabled={added}
+                        className={`${added ? ghostButton : primaryButton} mt-2 self-start text-xs`}
+                      >
+                        {added ? "추가됨" : "내 책에 추가"}
+                      </button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-medium">직접 추가</h2>
         <form
           action={createBook}
           className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
@@ -56,7 +200,7 @@ export function BooksView() {
       {books.length === 0 ? (
         <EmptyState
           title="아직 책이 없어요"
-          description="위에서 책을 추가하면 독후감을 연결할 수 있어요."
+          description="위에서 책을 검색하거나 직접 추가해 보세요."
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
