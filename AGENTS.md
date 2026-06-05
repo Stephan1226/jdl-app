@@ -89,6 +89,19 @@ npm run db:reset     # migrate reset --force --skip-seed && seed
 npm run db:studio    # Prisma Studio
 ```
 
+## WORKFLOW (에이전트용)
+작업 전 반드시 아래 순서를 따른다:
+
+1. **브랜치 확인** — `git branch --show-current`로 현재 브랜치가 `main`인지 확인한다.
+   - `main`이 아니면 `git checkout main`으로 이동한다.
+2. **풀** — `git pull`로 최신 변경사항을 받는다.
+3. **브랜치 생성** — 작업 내용에 맞는 브랜치명을 생성한다.
+   - 패턴: `{유형}/{간략한-설명}` (예: `fix/login-error`, `feat/dark-mode`, `refactor/api-layer`)
+   - 유형: `fix`(버그), `feat`(기능), `refactor`(리팩터), `chore`(설정/잡일)
+4. **작업 시작** — 생성한 브랜치에서 작업을 진행한다.
+5. **완료 후** — 에이전트가 스스로 PR을 만들지 않는다. 대신 **사용자에게 검증 요청**을 보낸다.
+6. **PR 생성** — 사용자가 "PR 만들어"라고 명령하면 그때 `gh pr create`로 PR을 생성한다.
+
 ## NOTES
 - `.env`의 DB URL 비밀번호에 `$`가 있으면 `%24`로 인코딩 — Next `@next/env`가 `$`를 변수 확장.
 - 데모 로그인: `me@jdl.app` / `jdl-demo-1234`
