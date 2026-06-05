@@ -88,7 +88,7 @@ export function BooksView() {
       queryKey: qk.books(params),
       queryFn: ({ pageParam = 0 }) =>
         fetchJson<BookListResult>(
-          `/api/books?${new URLSearchParams({ ...params, page: String(pageParam), limit: "20" }).toString()}`,
+          `/api/books?${new URLSearchParams({ ...params, page: String(pageParam), limit: "10" }).toString()}`,
         ),
       initialPageParam: 0,
       getNextPageParam: (lastPage, allPages) =>

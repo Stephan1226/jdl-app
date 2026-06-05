@@ -25,7 +25,7 @@ export interface BookListResult {
   hasMore: boolean;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 /**
  * 책 목록(+ 연결된 기록 수 + 마지막 기록 시각). 검색·정렬·페이지네이션 지원.
