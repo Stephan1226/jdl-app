@@ -6,11 +6,12 @@ export const qk = {
   dashboard: ["dashboard"] as const,
   entries: (type?: string) => ["entries", type ?? ""] as const,
   entry: (id: string) => ["entry", id] as const,
-  books: ["books"] as const,
+  books: (params?: Record<string, string>) => ["books", params ?? {}] as const,
   book: (id: string) => ["book", id] as const,
   goals: ["goals"] as const,
   goal: (id: string) => ["goal", id] as const,
   insights: ["insights"] as const,
   search: (params: Record<string, string>) => ["search", params] as const,
   entryFormOptions: ["entry-form-options"] as const,
+  bookSearch: (query: string) => ["book-search", query] as const,
 };

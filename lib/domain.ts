@@ -104,6 +104,8 @@ export type GoalInput = z.infer<typeof goalInputSchema>;
 export const bookInputSchema = z.object({
   title: z.string().trim().min(1, "책 제목을 입력해 주세요").max(300),
   author: z.preprocess(blank, z.string().trim().max(200).optional()),
+  isbn: z.preprocess(blank, z.string().trim().max(30).optional()),
+  coverUrl: z.preprocess(blank, z.string().trim().max(1000).optional()),
   totalPages: z.preprocess(numberOrUndefined, z.number().int().min(0).optional()),
 });
 export type BookInput = z.infer<typeof bookInputSchema>;
