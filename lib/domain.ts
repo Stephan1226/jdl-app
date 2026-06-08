@@ -62,7 +62,7 @@ export function isEntryType(v: string): v is EntryType {
 
 /** 폼에서 넘어온 빈 문자열을 undefined로 변환 */
 const blank = (v: unknown) =>
-  typeof v === "string" && v.trim() === "" ? undefined : v;
+  v === null || (typeof v === "string" && v.trim() === "") ? undefined : v;
 
 const numberOrUndefined = (v: unknown) =>
   v === "" || v === null || v === undefined ? undefined : Number(v);

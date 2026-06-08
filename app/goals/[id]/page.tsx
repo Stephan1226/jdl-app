@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/badges";
 import { ConfirmButton } from "@/components/confirm-button";
 import { EntryCard } from "@/components/entry-card";
 import { GoalProgress } from "@/components/goal-progress";
+import { GoalSuggestions } from "@/components/goal-suggestions";
 import { EmptyState, dangerButton, ghostButton, primaryButton } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { fmtDate } from "@/lib/format";
@@ -73,6 +74,8 @@ export default async function GoalDetailPage({
           <p className="text-sm text-muted">목표일 · {fmtDate(goal.targetDate)}</p>
         )}
       </div>
+
+      <GoalSuggestions goalId={goal.id} />
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">연결된 기록 {goal.entries.length}개</h2>
