@@ -3,6 +3,7 @@ import { getBooksData, type BookListResult } from "@/lib/data/books";
 import { getQueryClient } from "@/lib/query/client";
 import { qk } from "@/lib/query/keys";
 import { getCurrentUserId } from "@/lib/user";
+import { BookRecommendations } from "@/components/book-recommendations";
 import { BooksView } from "../books-view";
 
 export const dynamic = "force-dynamic";
@@ -21,8 +22,11 @@ export default async function BooksPage() {
   });
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <BooksView />
-    </HydrationBoundary>
+    <div className="space-y-6">
+      <BookRecommendations />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <BooksView />
+      </HydrationBoundary>
+    </div>
   );
 }
