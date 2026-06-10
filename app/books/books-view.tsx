@@ -343,7 +343,7 @@ export function BooksView() {
       ) : (
         <div className={`space-y-4 ${sel.active ? "pb-24" : ""}`}>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm text-muted">총 {books.length}권</p>
+            <p className="text-sm text-muted">총 {data?.pages[0]?.totalCount ?? books.length}권</p>
             {!sel.active && (
               <button
                 type="button"
