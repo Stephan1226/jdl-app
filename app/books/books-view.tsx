@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import {
   BookOpen,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
   Plus,
@@ -16,6 +17,11 @@ import Link from "next/link";
 import superjson from "superjson";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import {
+  SelectableItem,
+  SelectionToolbar,
+  useBulkSelect,
+} from "@/components/bulk-select";
 import {
   Card,
   EmptyState,
@@ -29,7 +35,7 @@ import {
 import type { BookListResult } from "@/lib/data/books";
 import { fetchJson } from "@/lib/query/fetcher";
 import { qk } from "@/lib/query/keys";
-import { addBookFromSearch, createBook } from "./actions";
+import { addBookFromSearch, createBook, deleteBooks } from "./actions";
 
 /* ── Daum 검색 결과 타입 ────────────────────────────────────────────── */
 
@@ -97,6 +103,22 @@ export function BooksView() {
     });
 
   const books = data?.pages.flatMap((p) => p.items) ?? [];
+
+  const sel = useBulkSelect();
+  const { exit: exitSelection } = sel;
+
+  // 필터·정렬이 바뀌면 보이지 않는 항목이 선택된 채 남지 않게 선택 모드를 종료
+  useEffect(() => {
+    exitSelection();
+  }, [filterQ, sortKey, sortOrder, exitSelection]);
+
+  async function handleBulkDelete() {
+    await deleteBooks([...sel.selected]);
+    exitSelection();
+    queryClient.invalidateQueries({ queryKey: ["books"] });
+    queryClient.invalidateQueries({ queryKey: ["entries"] });
+    queryClient.invalidateQueries({ queryKey: qk.dashboard });
+  }
 
   /* ── Daum 검색 핸들러 ─────────────────────────────────────────────── */
 
@@ -319,11 +341,33 @@ export function BooksView() {
           description="다른 검색어로 시도해 보세요."
         />
       ) : (
-        <div className="space-y-4">
-          <p className="text-sm text-muted">총 {books.length}권</p>
+        <div className={`space-y-4 ${sel.active ? "pb-24" : ""}`}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm text-muted">총 {books.length}권</p>
+            {!sel.active && (
+              <button
+                type="button"
+                className={ghostButton}
+                onClick={() => sel.start()}
+              >
+                <CheckSquare className="h-4 w-4" />
+                선택
+              </button>
+            )}
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {books.map((b) => (
-              <Link key={b.id} href={`/books/${b.id}`} className="block">
+              <SelectableItem
+                key={b.id}
+                className="h-full"
+                selectionMode={sel.active}
+                selected={sel.selected.has(b.id)}
+                onLongPress={() =>
+                  sel.active ? sel.toggle(b.id) : sel.start(b.id)
+                }
+                onToggle={() => sel.toggle(b.id)}
+              >
+              <Link href={`/books/${b.id}`} className="block h-full">
                 <Card className="flex h-full gap-4 transition hover:border-accent/40">
                   {/* 썸네일 */}
                   <div className="h-22 w-15 shrink-0 overflow-hidden rounded-lg bg-accent/10">
@@ -366,6 +410,7 @@ export function BooksView() {
                   </div>
                 </Card>
               </Link>
+              </SelectableItem>
             ))}
           </div>
 
@@ -390,6 +435,22 @@ export function BooksView() {
             </div>
           )}
         </div>
+      )}
+
+      {sel.active && (
+        <SelectionToolbar
+          count={sel.selected.size}
+          total={books.length}
+          unit="권"
+          confirmMessage={`선택한 책 ${sel.selected.size}권을 삭제할까요? 연결된 독후감 기록은 삭제되지 않지만, 되돌릴 수 없습니다.`}
+          onToggleAll={() =>
+            sel.selected.size === books.length
+              ? sel.setAll([])
+              : sel.setAll(books.map((b) => b.id))
+          }
+          onDelete={handleBulkDelete}
+          onExit={exitSelection}
+        />
       )}
     </div>
   );

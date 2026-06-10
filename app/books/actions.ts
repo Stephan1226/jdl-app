@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { bookInputSchema } from "@/lib/domain";
+import { bookInputSchema, idListSchema } from "@/lib/domain";
 import { prisma } from "@/lib/db";
 import { getCurrentUserId } from "@/lib/user";
 
@@ -53,4 +53,14 @@ export async function deleteBook(id: string) {
   revalidatePath("/books");
   revalidatePath("/entries");
   redirect("/books");
+}
+
+/** 선택한 책 일괄 삭제 — 연결된 기록은 onDelete: SetNull 로 보존. 목록에 머무르므로 redirect 없음 */
+export async function deleteBooks(ids: string[]) {
+  const userId = await getCurrentUserId();
+  const parsed = idListSchema.parse(ids);
+  // userId 스코프로 IDOR 방지
+  await prisma.book.deleteMany({ where: { id: { in: parsed }, userId } });
+  revalidatePath("/books");
+  revalidatePath("/entries");
 }
