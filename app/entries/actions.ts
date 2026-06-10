@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
-import { entryInputSchema } from "@/lib/domain";
+import { entryInputSchema, idListSchema } from "@/lib/domain";
 import { prisma } from "@/lib/db";
 import { getCurrentUserId } from "@/lib/user";
 
@@ -110,4 +110,14 @@ export async function deleteEntry(id: string) {
   revalidatePath("/entries");
   revalidatePath("/");
   redirect("/entries");
+}
+
+/** 선택한 기록 일괄 삭제 — 목록 페이지에 머무르므로 redirect 없음 */
+export async function deleteEntries(ids: string[]) {
+  const userId = await getCurrentUserId();
+  const parsed = idListSchema.parse(ids);
+  // userId 스코프 → 남의 기록은 삭제되지 않는다(IDOR 방지)
+  await prisma.entry.deleteMany({ where: { id: { in: parsed }, userId } });
+  revalidatePath("/entries");
+  revalidatePath("/");
 }

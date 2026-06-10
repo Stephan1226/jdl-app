@@ -100,6 +100,9 @@ export const goalInputSchema = z.object({
 });
 export type GoalInput = z.infer<typeof goalInputSchema>;
 
+/** 일괄 삭제 등 id 배열 입력 검증 */
+export const idListSchema = z.array(z.string().min(1)).min(1).max(500);
+
 /** 책 작성 입력 검증 */
 export const bookInputSchema = z.object({
   title: z.string().trim().min(1, "책 제목을 입력해 주세요").max(300),
