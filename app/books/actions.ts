@@ -34,6 +34,13 @@ export async function addBookFromSearch(formData: FormData) {
     isbn: formData.get("isbn"),
     coverUrl: formData.get("coverUrl"),
   });
+  if (data.isbn) {
+    const exists = await prisma.book.findFirst({
+      where: { userId, isbn: data.isbn },
+      select: { id: true },
+    });
+    if (exists) return;
+  }
   await prisma.book.create({
     data: {
       userId,

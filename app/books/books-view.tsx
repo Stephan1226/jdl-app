@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useInfiniteQuery,
   useQueryClient,
@@ -104,6 +104,11 @@ export function BooksView() {
 
   const books = data?.pages.flatMap((p) => p.items) ?? [];
 
+  const existingIsbns = useMemo(
+    () => new Set(books.flatMap((b) => (b.isbn ? [b.isbn] : []))),
+    [books],
+  );
+
   const sel = useBulkSelect();
   const { exit: exitSelection } = sel;
 
@@ -150,13 +155,6 @@ export function BooksView() {
     await addBookFromSearch(formData);
     setAddedIsbns((prev) => new Set(prev).add(isbn));
     queryClient.invalidateQueries({ queryKey: qk.books({}) });
-    setTimeout(() => {
-      setAddedIsbns((prev) => {
-        const next = new Set(prev);
-        next.delete(isbn);
-        return next;
-      });
-    }, 2000);
   }
 
   /* ── 렌더링 ───────────────────────────────────────────────────────── */
@@ -198,7 +196,7 @@ export function BooksView() {
             <div className="grid gap-3 sm:grid-cols-2">
               {searchResults.map((doc) => {
                 const isbn = doc.isbn.split(" ")[0] || doc.isbn;
-                const added = addedIsbns.has(isbn);
+                const added = addedIsbns.has(isbn) || existingIsbns.has(isbn);
                 return (
                   <Card key={isbn} className="flex gap-4">
                     <div className="h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-accent/10">
