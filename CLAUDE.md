@@ -1,5 +1,8 @@
 @AGENTS.md
 
+# GitHub 레포
+**레포명: `Stephan1226/jdl-app`** — `gh` CLI 사용 시 항상 `--repo Stephan1226/jdl-app` 옵션을 붙인다.
+
 # jdl — 프로젝트 규칙
 
 흩어진 개인 기록(독서·생각·목표)을 한 곳에 모으는 서비스. 자세한 내용은 [README](README.md).
