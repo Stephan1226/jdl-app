@@ -18,10 +18,16 @@ function levelClass(count: number): string {
 const MONTHS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
+function getTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 /**
  * GitHub 잔디형 기록 히트맵. 한 해를 통째로(주=열, 요일=행) 깐다.
  * 칸은 컨테이너 폭에 맞춰 늘고 줄어 **가로 스크롤이 생기지 않는다**(스크롤바로 인한 높이 흔들림 방지).
  * 여러 해 데이터가 있으면 연도 탭으로 과거도 보고, 칸에 호버하면 그날 기록 수가 뜬다.
+ * 현재 연도는 오늘까지만 활성 — 미래 칸은 잠금 표시된다.
  */
 export function ContributionHeatmap({
   dayCounts,

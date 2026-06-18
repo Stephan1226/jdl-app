@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Compass, Flame, Trophy } from "lucide-react";
 import Link from "next/link";
 import { ContributionHeatmap } from "@/components/contribution-heatmap";
 import { Card, EmptyState, PageHeader, primaryButton } from "@/components/ui";
@@ -9,6 +8,44 @@ import type { GrowthData } from "@/lib/data/growth";
 import type { Badge } from "@/lib/growth";
 import { fetchJson } from "@/lib/query/fetcher";
 import { qk } from "@/lib/query/keys";
+
+// 레벨 — 게임 gem(보석) 아이콘
+function GemIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <polygon points="8,3 16,3 21,9 12,21 3,9" opacity="0.85" />
+      <polygon points="8,3 16,3 21,9 12,9 3,9" opacity="1" />
+      <line x1="9" y1="5" x2="11" y2="8" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.45" />
+    </svg>
+  );
+}
+
+// 연속 기록 — 게임 불꽃 아이콘
+function FlameIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M12 2C11 5 8 8 8 12.5a4.5 4.5 0 009 0c0-2-.9-3.4-2-4.5.1 1.4-.8 2.5-.8 2.5C14.5 8 14 4.5 12 2z" />
+      <path d="M12 15.5a1.8 1.8 0 01-1.8-1.8" stroke="white" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.55" />
+    </svg>
+  );
+}
+
+// 사고 다양성 — 4방향 나침반 로즈 아이콘
+function CompassRoseIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="1.6" />
+      {/* N (밝음) */}
+      <path d="M12 3l2.2 5.5H9.8L12 3z" />
+      {/* S (어두움) */}
+      <path d="M12 21l-2.2-5.5h4.4L12 21z" opacity="0.55" />
+      {/* E (밝음) */}
+      <path d="M21 12l-5.5 2.2V9.8L21 12z" />
+      {/* W (어두움) */}
+      <path d="M3 12l5.5-2.2v4.4L3 12z" opacity="0.55" />
+    </svg>
+  );
+}
 
 export function GrowthView() {
   const { data } = useQuery({
@@ -50,7 +87,7 @@ export function GrowthView() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <div className="flex items-center gap-2 text-sm text-muted">
-            <Trophy className="h-4 w-4 text-accent" /> 레벨
+            <GemIcon className="h-4 w-4 text-accent" /> 레벨
           </div>
           <p className="mt-2 text-4xl font-bold tracking-tight">
             Lv.{data.level}
@@ -87,7 +124,7 @@ export function GrowthView() {
 
         <Card>
           <div className="flex items-center gap-2 text-sm text-muted">
-            <Flame className="h-4 w-4 text-orange-500" /> 연속 기록
+            <FlameIcon className="h-4 w-4 text-orange-500" /> 연속 기록
           </div>
           <p className="mt-2 text-4xl font-bold tracking-tight">
             {data.stats.currentStreak}
@@ -99,7 +136,7 @@ export function GrowthView() {
         </Card>
       </div>
 
-      {/* 기록 잔디 — 꾸준함 시각화 */}
+      {/* 기록 잔디 */}
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">기록 잔디</h2>
         <Card>
@@ -107,7 +144,7 @@ export function GrowthView() {
         </Card>
       </section>
 
-      {/* 다양성 점수 — 편향 해소(시야)와의 연결 고리 */}
+      {/* 다양성 점수 */}
       <DiversityCard score={data.diversity} />
 
       {/* 배지 */}
@@ -165,14 +202,14 @@ function DiversityCard({ score }: { score: number }) {
 
         <div className="flex-1 text-center sm:text-left">
           <h2 className="flex items-center justify-center gap-2 text-lg font-semibold sm:justify-start">
-            <Compass className="h-5 w-5 text-accent" /> 사고 다양성
+            <CompassRoseIcon className="h-5 w-5 text-accent" /> 사고 다양성
           </h2>
           <p className="mt-1.5 text-sm text-muted">
             한 가지 주제·톤에 머무를수록 점수가 낮아집니다. 다양한 종류·출처·감정의
             기록을 남길수록 시야가 넓어져요.
           </p>
           <Link href="/perspective" className={`${primaryButton} mt-4`}>
-            <Compass className="h-4 w-4" /> AI로 다른 시야 보기
+            <CompassRoseIcon className="h-4 w-4" /> AI로 다른 시야 보기
           </Link>
         </div>
       </div>
