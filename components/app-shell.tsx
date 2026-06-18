@@ -2,6 +2,8 @@
 
 import {
   BookOpen,
+  Compass,
+  Flame,
   LayoutDashboard,
   LineChart,
   LogOut,
@@ -29,6 +31,8 @@ const NAV: NavItem[] = [
   { href: "/books", label: "독서", icon: BookOpen },
   { href: "/search", label: "검색", icon: Search },
   { href: "/insights", label: "인사이트", icon: LineChart },
+  { href: "/perspective", label: "시야", icon: Compass },
+  { href: "/growth", label: "성장", icon: Flame },
   { href: "/goals", label: "목표", icon: Target },
 ];
 

@@ -11,6 +11,7 @@ export const qk = {
   goals: ["goals"] as const,
   goal: (id: string) => ["goal", id] as const,
   insights: ["insights"] as const,
+  growth: ["growth"] as const,
   search: (params: Record<string, string>) => ["search", params] as const,
   entryFormOptions: ["entry-form-options"] as const,
   bookSearch: (query: string) => ["book-search", query] as const,
