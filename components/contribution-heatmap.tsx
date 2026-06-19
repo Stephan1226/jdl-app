@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-type Cell = { date: string; count: number; dow: number };
+type Cell = { date: string; count: number; dow: number; future?: boolean };
 type Hover = { date: string; count: number; x: number; y: number };
 
-/** 기록 수 → 잔디 색 단계 (0=빈칸, 1~4 진해짐). */
 function levelClass(count: number): string {
   if (count <= 0) return "bg-black/[.06] dark:bg-white/[.07]";
   if (count === 1) return "bg-accent/30";
@@ -15,14 +14,13 @@ function levelClass(count: number): string {
   return "bg-accent";
 }
 
-const MONTHS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
-/**
- * GitHub 잔디형 기록 히트맵. 한 해를 통째로(주=열, 요일=행) 깐다.
- * 칸은 컨테이너 폭에 맞춰 늘고 줄어 **가로 스크롤이 생기지 않는다**(스크롤바로 인한 높이 흔들림 방지).
- * 여러 해 데이터가 있으면 연도 탭으로 과거도 보고, 칸에 호버하면 그날 기록 수가 뜬다.
- */
+const _now = new Date();
+const CURRENT_YEAR = _now.getFullYear();
+const TODAY_STR = `${CURRENT_YEAR}-${pad(_now.getMonth() + 1)}-${pad(_now.getDate())}`;
+
 export function ContributionHeatmap({
   dayCounts,
   years,
@@ -38,7 +36,7 @@ export function ContributionHeatmap({
     const d = new Date(year, 0, 1);
     while (d.getFullYear() === year) {
       const key = `${year}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      cells.push({ date: key, count: dayCounts[key] ?? 0, dow: d.getDay() });
+      cells.push({ date: key, count: dayCounts[key] ?? 0, dow: d.getDay(), future: year === CURRENT_YEAR && key > TODAY_STR });
       d.setDate(d.getDate() + 1);
     }
 
@@ -46,10 +44,7 @@ export function ContributionHeatmap({
     let week: (Cell | null)[] = new Array(7).fill(null);
     for (const c of cells) {
       week[c.dow] = c;
-      if (c.dow === 6) {
-        weeks.push(week);
-        week = new Array(7).fill(null);
-      }
+      if (c.dow === 6) { weeks.push(week); week = new Array(7).fill(null); }
     }
     if (week.some((c) => c !== null)) weeks.push(week);
 
@@ -62,8 +57,8 @@ export function ContributionHeatmap({
       return month !== prevMonth ? MONTHS[month] : "";
     });
 
-    const activeDays = cells.filter((c) => c.count > 0).length;
-    const total = cells.reduce((s, c) => s + c.count, 0);
+    const activeDays = cells.filter((c) => !c.future && c.count > 0).length;
+    const total = cells.reduce((s, c) => (c.future ? s : s + c.count), 0);
     return { weeks, monthLabels, activeDays, total };
   }, [year, dayCounts]);
 
@@ -92,19 +87,14 @@ export function ContributionHeatmap({
         </div>
       )}
 
-      {/* 월 라벨 — 각 주 열과 같은 폭(flex-1)으로 맞추고, 글자는 옆 빈 열로 넘쳐 보이게 */}
       <div className="flex gap-[2px]">
         {monthLabels.map((m, i) => (
-          <div
-            key={i}
-            className="min-w-0 flex-1 overflow-visible whitespace-nowrap text-[10px] text-muted"
-          >
+          <div key={i} className="min-w-0 flex-1 overflow-visible whitespace-nowrap text-[10px] text-muted">
             {m}
           </div>
         ))}
       </div>
 
-      {/* 잔디 — 폭에 맞춰 칸이 늘고 줄어 가로 스크롤이 없다 */}
       <div className="flex gap-[2px]">
         {weeks.map((week, wi) => (
           <div key={wi} className="flex flex-1 flex-col gap-[2px]">
@@ -114,17 +104,12 @@ export function ContributionHeatmap({
               ) : (
                 <div
                   key={di}
-                  className={`aspect-square w-full rounded-[2px] ${levelClass(cell.count)}`}
-                  onMouseEnter={(e) => {
+                  className={`aspect-square w-full rounded-[2px] ${cell.future ? "opacity-0" : levelClass(cell.count)}`}
+                  onMouseEnter={cell.future ? undefined : (e) => {
                     const r = e.currentTarget.getBoundingClientRect();
-                    setHover({
-                      date: cell.date,
-                      count: cell.count,
-                      x: r.left + r.width / 2,
-                      y: r.top,
-                    });
+                    setHover({ date: cell.date, count: cell.count, x: r.left + r.width / 2, y: r.top });
                   }}
-                  onMouseLeave={() => setHover(null)}
+                  onMouseLeave={cell.future ? undefined : () => setHover(null)}
                 />
               ),
             )}
@@ -133,9 +118,7 @@ export function ContributionHeatmap({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
-        <span>
-          {year}년 · {activeDays}일 기록, 총 {total}개
-        </span>
+        <span>{year}년 · {activeDays}일 기록, 총 {total}개</span>
         <span className="flex items-center gap-1">
           적음
           <span className="h-3 w-3 rounded-[2px] bg-black/[.06] dark:bg-white/[.07]" />
@@ -147,7 +130,6 @@ export function ContributionHeatmap({
         </span>
       </div>
 
-      {/* 툴팁은 body로 포털 → 카드 레이아웃에 전혀 영향 주지 않음 */}
       {hover &&
         typeof document !== "undefined" &&
         createPortal(
