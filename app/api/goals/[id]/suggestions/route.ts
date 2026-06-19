@@ -1,7 +1,12 @@
 import { requireUserId } from "@/lib/api";
+import {
+  goalSignature,
+  writeRecommendation,
+} from "@/lib/data/recommendations";
 import { prisma } from "@/lib/db";
 import { AiKeyError, callAI } from "@/lib/openrouter";
 
+/** 재생성 — 목표와 연결 기록으로 다음 할 일을 만들고 DB에 저장한다. */
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -53,7 +58,18 @@ ${entriesText}
       return Response.json({ error: "parse_error" }, { status: 500 });
     }
     const parsed = JSON.parse(match[0]) as { suggestions?: string[] };
-    return Response.json({ suggestions: parsed.suggestions ?? [] });
+    const suggestions = parsed.suggestions ?? [];
+
+    const sig = await goalSignature(userId, id);
+    await writeRecommendation(
+      userId,
+      "GOAL_NEXT_ACTION",
+      id,
+      { suggestions },
+      sig,
+    );
+
+    return Response.json({ suggestions });
   } catch (e) {
     if (e instanceof AiKeyError) {
       return Response.json({ error: "api_key_invalid" }, { status: 503 });
