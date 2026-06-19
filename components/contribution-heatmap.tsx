@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-type Cell = { date: string; count: number; dow: number };
+type Cell = { date: string; count: number; dow: number; future?: boolean };
 type Hover = { date: string; count: number; x: number; y: number };
 
 function levelClass(count: number): string {
@@ -36,8 +36,7 @@ export function ContributionHeatmap({
     const d = new Date(year, 0, 1);
     while (d.getFullYear() === year) {
       const key = `${year}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      if (year === CURRENT_YEAR && key > TODAY_STR) break;
-      cells.push({ date: key, count: dayCounts[key] ?? 0, dow: d.getDay() });
+      cells.push({ date: key, count: dayCounts[key] ?? 0, dow: d.getDay(), future: year === CURRENT_YEAR && key > TODAY_STR });
       d.setDate(d.getDate() + 1);
     }
 
@@ -58,8 +57,8 @@ export function ContributionHeatmap({
       return month !== prevMonth ? MONTHS[month] : "";
     });
 
-    const activeDays = cells.filter((c) => c.count > 0).length;
-    const total = cells.reduce((s, c) => s + c.count, 0);
+    const activeDays = cells.filter((c) => !c.future && c.count > 0).length;
+    const total = cells.reduce((s, c) => (c.future ? s : s + c.count), 0);
     return { weeks, monthLabels, activeDays, total };
   }, [year, dayCounts]);
 
@@ -105,12 +104,12 @@ export function ContributionHeatmap({
               ) : (
                 <div
                   key={di}
-                  className={`aspect-square w-full rounded-[2px] ${levelClass(cell.count)}`}
-                  onMouseEnter={(e) => {
+                  className={`aspect-square w-full rounded-[2px] ${cell.future ? "opacity-0" : levelClass(cell.count)}`}
+                  onMouseEnter={cell.future ? undefined : (e) => {
                     const r = e.currentTarget.getBoundingClientRect();
                     setHover({ date: cell.date, count: cell.count, x: r.left + r.width / 2, y: r.top });
                   }}
-                  onMouseLeave={() => setHover(null)}
+                  onMouseLeave={cell.future ? undefined : () => setHover(null)}
                 />
               ),
             )}
