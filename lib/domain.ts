@@ -42,6 +42,10 @@ export const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
   ABANDONED: "중단",
 };
 
+/** AI 추천 종류 — Recommendation.kind (String 컬럼) 허용값 */
+export const RECOMMENDATION_KINDS = ["BOOK", "GOAL_NEXT_ACTION"] as const;
+export type RecommendationKind = (typeof RECOMMENDATION_KINDS)[number];
+
 /** 감정/생각 톤 — 시각화용 (-2..2) */
 export const MOOD_OPTIONS = [
   { value: 2, label: "아주 좋음", emoji: "😄" },

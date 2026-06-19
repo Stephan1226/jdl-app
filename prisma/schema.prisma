@@ -21,10 +21,11 @@ model User {
   name      String
   createdAt DateTime @default(now())
 
-  entries Entry[]
-  books   Book[]
-  tags    Tag[]
-  goals   Goal[]
+  entries         Entry[]
+  books           Book[]
+  tags            Tag[]
+  goals           Goal[]
+  recommendations Recommendation[]
 }
 
 /// 책. 독서 기록(Entry.type = BOOK)이 연결되는 대상.
@@ -120,7 +121,29 @@ model Goal {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  entries Entry[]
+  entries         Entry[]
+  recommendations Recommendation[]
 
   @@index([userId, status])
+}
+
+/// AI 추천 결과 캐시. 페이지를 이동해도 사라지지 않도록 DB에 저장한다.
+/// kind: BOOK(독서 추천) | GOAL_NEXT_ACTION(목표 다음 할 일) — lib/domain.ts에서 관리.
+/// sourceCount/sourceLatest: 생성 시점 "관련 기록"의 시그니처(개수 + 최신 수정시각).
+/// 이후 기록이 늘거나 바뀌면(stale) UI가 "새 기록에 맞춰 다시 추천"을 유도한다.
+model Recommendation {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind         String
+  goalId       String? // GOAL_NEXT_ACTION일 때만. BOOK은 null(유저당 1개).
+  goal         Goal?     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  payload      Json // { recommendations: [...] } 또는 { suggestions: [...] }
+  sourceCount  Int       @default(0)
+  sourceLatest DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId, kind])
+  @@index([goalId])
 }

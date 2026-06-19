@@ -1,15 +1,30 @@
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
+import {
+  bookSignature,
+  readRecommendation,
+} from "@/lib/data/recommendations";
 import { getBooksData, type BookListResult } from "@/lib/data/books";
 import { getQueryClient } from "@/lib/query/client";
 import { qk } from "@/lib/query/keys";
 import { getCurrentUserId } from "@/lib/user";
-import { BookRecommendations } from "@/components/book-recommendations";
+import {
+  BookRecommendations,
+  type BookRec,
+} from "@/components/book-recommendations";
 import { BooksView } from "../books-view";
 
 export const dynamic = "force-dynamic";
 
 export default async function BooksPage() {
   const userId = await getCurrentUserId();
+
+  const sig = await bookSignature(userId);
+  const cached = await readRecommendation<{ recommendations: BookRec[] }>(
+    userId,
+    "BOOK",
+    null,
+    sig,
+  );
 
   const queryClient = getQueryClient();
   await queryClient.prefetchInfiniteQuery({
@@ -23,7 +38,17 @@ export default async function BooksPage() {
 
   return (
     <div className="space-y-6">
-      <BookRecommendations />
+      <BookRecommendations
+        initial={
+          cached
+            ? {
+                recommendations: cached.payload.recommendations,
+                stale: cached.stale,
+              }
+            : null
+        }
+        hasEntries={sig.count > 0}
+      />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <BooksView />
       </HydrationBoundary>

@@ -7,6 +7,10 @@ import { EntryCard } from "@/components/entry-card";
 import { GoalProgress } from "@/components/goal-progress";
 import { GoalSuggestions } from "@/components/goal-suggestions";
 import { EmptyState, dangerButton, ghostButton, primaryButton } from "@/components/ui";
+import {
+  goalSignature,
+  readRecommendation,
+} from "@/lib/data/recommendations";
 import { prisma } from "@/lib/db";
 import { fmtDate } from "@/lib/format";
 import { entryInclude } from "@/lib/queries";
@@ -27,6 +31,14 @@ export default async function GoalDetailPage({
     },
   });
   if (!goal) notFound();
+
+  const sig = await goalSignature(userId, goal.id);
+  const cached = await readRecommendation<{ suggestions: string[] }>(
+    userId,
+    "GOAL_NEXT_ACTION",
+    goal.id,
+    sig,
+  );
 
   return (
     <div className="space-y-6">
@@ -75,7 +87,14 @@ export default async function GoalDetailPage({
         )}
       </div>
 
-      <GoalSuggestions goalId={goal.id} />
+      <GoalSuggestions
+        goalId={goal.id}
+        initial={
+          cached
+            ? { suggestions: cached.payload.suggestions, stale: cached.stale }
+            : null
+        }
+      />
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">연결된 기록 {goal.entries.length}개</h2>
