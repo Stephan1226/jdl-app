@@ -17,3 +17,21 @@
 - **인증 = Supabase Auth(멀티유저).** `lib/user.ts`의 `getCurrentUser()`가 Supabase 세션 유저를 **같은 id로 Prisma `User`에 upsert**(브리지). 페이지/액션은 `getCurrentUserId()`만 호출 — 이게 멀티유저 진입점. Supabase 서버 클라이언트는 `lib/supabase/server.ts`, 세션 갱신·라우트 보호는 루트 `proxy.ts`(※ Next 16에서 `middleware`→`proxy` 개명, Node 런타임). 인증 액션은 `app/auth/actions.ts`.
 - **인가는 앱 코드의 `userId` 스코프.** 읽기는 `findFirst({ where: { id, userId } })`, 수정/삭제도 `userId`를 포함해 남의 데이터 접근 차단(IDOR 방지). 새 쿼리/뮤테이션도 반드시 `userId` 스코프.
 - 데이터 변경(서버 액션)은 `revalidatePath` 후 `redirect`. DB 읽는 페이지는 `force-dynamic`. Server Action은 각 도메인 폴더의 `actions.ts`(`"use server"`)에 둔다.
+
+# 검증 절차
+
+사용자에게 검증을 요청할 때는 반드시 아래 순서를 따른다:
+
+1. **`.env` 복사** — 메인 레포의 `.env`를 워크트리로 복사한다.
+   ```
+   cp /Users/stephankim/projects/graduation/jdl/.env {워크트리 경로}/.env
+   ```
+2. **Prisma 클라이언트 생성** — 워크트리는 생성물이 없으므로 반드시 먼저 실행한다.
+   ```
+   cd {워크트리 경로} && npx prisma generate
+   ```
+3. **개발 서버 실행** — 워크트리 디렉터리에서 백그라운드로 서버를 켠다.
+   ```
+   cd {워크트리 경로} && npm run dev
+   ```
+4. **접속 요청** — 사용자에게 `http://localhost:3000` 접속을 요청하고 확인할 경로(예: `/growth`)를 안내한다.
