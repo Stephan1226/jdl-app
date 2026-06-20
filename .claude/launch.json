@@ -6,6 +6,15 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "dev-ai-chat-worktree",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/stephankim/projects/graduation/jdl-feat-ai-chat-cached-recs && npm run dev"
+      ],
+      "port": 3000
     }
   ]
 }
